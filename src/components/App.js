@@ -1,5 +1,5 @@
-import { Component } from "react";
-import * as API from '../API/ApiQuery';
+import { useEffect, useState } from "react";
+import { getData } from '../API/ApiQuery';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from "./Loader/Loader";
@@ -7,97 +7,81 @@ import { Modal } from "./Modal/Modal";
 import { Button } from './Button/Button';
 import { AppStyled } from './App.styled';
 
-export class App extends Component {
-  state = {
-    isLoading: false,
-    page: 1,
-    data: [],
-    total: 0,
-    pages: 0,
-    query: '',
-    showModal: false,
-    imgData: {},
-  };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    const { query: prevQuery, page: prevPage } = prevState;
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imgData, setImgData] = useState([]);
+  const [largeImg, setLargeImg] = useState(null)
 
-    if (query !== prevQuery || (page !== prevPage && page !== 1)) {
-      API.params.page = query !== prevQuery ? 1 : page;
-      API.params.q = query;
-      try {
-        this.setState({ isLoading: true });
-        const data = await API.getData(API.params);
-        const { total, hits } = data;
 
-        const isRequiredHits = hits.map(
-          ({ id, largeImageURL, webformatURL, tags }) => ({
-            id,
-            largeImageURL,
-            webformatURL,
-            tags,
-          })
-        );
-
-        if (query !== prevQuery) {
-          this.setState({
-            data: [...isRequiredHits],
-            page: API.params.page,
-            total: total,
-            pages: Math.ceil(total / API.params.per_page),
-            isLoading: false,
-          });
-        } else {
-          this.setState(prevState => ({
-            data: [...prevState.data, ...isRequiredHits],
-            page: API.params.page,
-            isLoading: false,
-          }));
-        }
-      } catch (error) {       
-        console.log(error);
-      } finally {
-        this.setState({ isLoading: false });
-      }
+useEffect(() => {
+  if (query === '') {
+    return;
+  }
+  async function getImages() {
+    try {
+      setIsLoading(true);
+      const {hits} = await getData(query, page);
+      // const { hits } = dataHits;
+      // const isRequiredHits = hits.map(
+      //   ({ id, largeImageURL, webformatURL, tags }) => ({
+      //     id,
+      //     largeImageURL,
+      //     webformatURL,
+      //     alt: tags,
+      //   })
+      // );
+      // const isRequiredHits = hits => {
+      //   return hits.map(
+      //     ({ id, webformatURL, largeImageURL, tags }) => {
+      //       return { id, webformatURL, largeImageURL, alt: tags };
+      //     });
+      // };
+    
+      setImgData(prevImg => [...prevImg, ...hits]);
+    } catch (error) {
+     console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   }
+  getImages();
+}, [query, page]);
 
-  setQuery = value => {
-    this.setState({ query: value });
-  };
-
-  toggleModal = imgData => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-      imgData,
-    }));
-  };
-
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
-
-  render() {
-    const { data, isLoading, page, pages, showModal, imgData } = this.state;
-    return (
-      <AppStyled>
-        <Searchbar onSubmit={this.setQuery} />
-        {data.length > 0 && (
-          <ImageGallery data={data} toggleLargeSize={this.toggleModal} />
-        )}
-        {isLoading && <Loader />}
-        {data.length > 0 && page < pages && (
-          <Button type="button" onClick={this.handleLoadMore}>
-            Load more
-          </Button>
-        )}
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img alt={imgData.alt} src={imgData.url} />
-          </Modal>
-        )}
-      </AppStyled>
-    );
-  }
+const onChangeQuery = query => {
+  setQuery(query);
+  setPage(1);
+  setImgData([]);
 };
+
+const handleLoadMore = () => {
+  setPage(prevPage => prevPage + 1);
+};
+
+  const toggleLargeSize = largeImg => {
+  setLargeImg(largeImg);
+};
+
+return (
+  <AppStyled>
+    <Searchbar onSubmit={onChangeQuery} />
+    {imgData.length > 0 && (
+      <ImageGallery data={imgData} toggleLargeSize={toggleLargeSize} />
+    )}
+    {isLoading && <Loader />}
+    {imgData.length > 0 && !isLoading && (
+      <Button type="button" onClick={handleLoadMore}/>
+    )}
+    {largeImg && (
+      <Modal largeImg={largeImg.url} alt={query} onClose={toggleLargeSize}>
+        <img alt={query} src={largeImg.url} />
+      </Modal>
+    )}
+  </AppStyled>
+);
+}
+
+
+

@@ -1,5 +1,4 @@
-import { Component } from "react";
-import { Formik } from 'formik';
+import { useState } from "react";
 import PropTypes from 'prop-types';
 import {
   FormBtnStyled,
@@ -9,37 +8,40 @@ import {
 } from './Searchbar.styled';
 
 
-export class Searchbar extends Component {
-    render() {
-        return (
-          <SearchbarBox>
-            <Formik
-              initialValues={{ search: '' }}
-              onSubmit={(values, actions) => {
-                this.props.onSubmit(values.search);
-                actions.setSubmitting(false);
-              }}
-            >
-              {({ isSubmitting }) => (
-                <FormStyled>
-                  {isSubmitting && <div>Loading...</div>}
-                  <FormBtnStyled type="submit" disabled={isSubmitting}>
-                  </FormBtnStyled>
-                  <InputStyled
-                    name="search"
-                    type="text"
-                    autoComplete="off"
-                    autoFocus
-                    placeholder="Search images and photos"
-                  />
-                </FormStyled>
-              )}
-            </Formik>
-          </SearchbarBox>
-        );
+export const Searchbar = ({ onSubmit }) => {
+  const [query, setQuery] = useState('');
+  
+  const handleChange = e => {
+   setQuery(e.target.value.toLowerCase());
+  };
+  
+  const handleSubmit = event => {
+    event.preventDefault();
 
-    }
+    onSubmit(query);
+    setQuery('');
+  };
+
+  return (
+    <SearchbarBox>
+          <FormStyled onSubmit={handleSubmit}>
+            <FormBtnStyled
+              type="submit"
+            ></FormBtnStyled>
+        <InputStyled
+          onChange={handleChange}
+          name="query"
+          value={query}
+              type="text"
+              autoComplete="off"
+              autoFocus
+              placeholder="Search images and photos"
+            />
+          </FormStyled>
+    </SearchbarBox>
+  );
 }
+
 
 Searchbar.propTypes = {
   onSubmit: PropTypes.func.isRequired,

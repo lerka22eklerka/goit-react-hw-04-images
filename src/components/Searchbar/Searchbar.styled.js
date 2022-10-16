@@ -1,4 +1,3 @@
-import { Field, Form } from "formik";
 import styled from "styled-components";
 
 export const SearchbarBox = styled.div`
@@ -20,7 +19,7 @@ export const SearchbarBox = styled.div`
     0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12);
 `;
 
-export const FormStyled = styled(Form)`
+export const FormStyled = styled.form`
   display: flex;
   align-items: center;
   width: 100%;
@@ -48,7 +47,7 @@ export const FormBtnStyled = styled.button`
   }
 `;
 
-export const InputStyled = styled(Field)`
+export const InputStyled = styled.input`
   display: inline-block;
   width: 100%;
   font: inherit;
